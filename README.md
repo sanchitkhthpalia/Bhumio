@@ -9,37 +9,48 @@ A React application demonstrating dynamic client-side validation coupled with si
 - **Robust Error Handling**: Distinct visual treatments for client vs. server errors. Input is never lost on error.
 - **Modern UI**: Clean, responsive interface built with Tailwind CSS.
 
-## How It Works
+## Example Validation Scenarios
 
-### Validation Flow
+### Scenario A: Client Rejection (Fast Fail)
+1.  **Action**: User types an email with a blocked domain (e.g., `test@scam.com`).
+2.  **Result**: The input border turns **RED** immediately.
+3.  **UI Feedback**: A "❌ Domain blocked" message appears. The submit button is disabled.
 
-1.  **Client-Side**:
-    *   The `useDynamicValidation` hook rotates rules periodically.
-    *   The form validates inputs in real-time against these *current* rules.
-    *   Submitting is blocked if client rules are not met.
+### Scenario B: Server Rejection (Latency + Rule Mismatch)
+1.  **Action**: User types a valid amount (e.g., `$4000`) and submits.
+2.  **Result**: 
+    *   Form enters "Loading" state (spinner).
+    *   After 1-2 seconds, the server rejects it because its internal limit is strict ($5000 max, or random failure).
+3.  **UI Feedback**: 
+    *   The input border turns **AMBER/ORANGE**.
+    *   A "⚠️ Server: Limit exceeded" message appears below the input.
+    *   **Crucially**, the user's input remains for them to correct.
 
-2.  **Server-Side**:
-    *   Once client validation passes, data is sent to `mockServer.js`.
-    *   The server mimics a real-world scenario where backend rules might differ (e.g., a blacklist not known to the client).
-    *   It also simulates random network/business logic failures (approx. 30% chance).
+### Scenario C: Success (The Happy Path)
+1.  **Action**: User fixes errors and resubmits.
+2.  **Result**: Server accepts the transaction.
+3.  **UI Feedback**: A green success banner appears: "Transaction submitted successfully!".
 
-### Error Handling
+## Why Separate Client & Server Validation?
 
--   **Client Errors**: Shown immediately below the input in **Red**. These prevent submission.
--   **Server Errors**: Shown below the input in **Orange/Amber**. These occur after submission and do not clear user input, allowing them to correct and retry.
--   **Global Errors**: Network or generic failures are shown at the top of the form.
+Real-world applications must treat client validation as a **UX enhancement** and server validation as the **source of truth**.
+-   **Client**: Fast feedback, prevents obvious errors, saves bandwidth.
+-   **Server**: Security gateway, handles race conditions (e.g., rule changed during latency), and validates against private data (e.g., DB constraints).
+-   This app forces this separation by making the two layers potentially disagree.
 
-## Setup & Run
+## How to Test
 
-1.  Install dependencies:
-    ```bash
-    npm install
-    ```
+**Option 1: Development Mode**
+1.  `npm install`
+2.  `npm run dev`
+3.  Open `http://localhost:5173`.
+    -   Watch the **"Current Rules"** box flash when rules update.
+    -   Try to "race" the rules: Type a valid amount, wait for the limit to drop, and see validation fail instantly.
 
-2.  Run development server:
-    ```bash
-    npm run dev
-    ```
+**Option 2: Production Build**
+1.  `npm run build`
+2.  `npm run preview`
+3.  Open `http://localhost:4173` to test the optimized build.
 
 ## Project Structure
 
